@@ -10,7 +10,6 @@ app.post('/api/download', (req, res) => {
     const { url, format } = req.body;
     if (!url) return res.status(400).json({ error: 'Link gerekli' });
 
-    // yt-dlp komutu ile indirme linkini çekiyoruz
     const command = format === 'mp3' 
         ? `yt-dlp -g -f bestaudio "${url}"`
         : `yt-dlp -g -f "best" "${url}"`;
@@ -24,5 +23,4 @@ app.post('/api/download', (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda çalışıyor`));
+module.exports = app;
