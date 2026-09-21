@@ -2,15 +2,17 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
+
+app.options('*', cors());
 
 app.post('/api/download', async (req, res) => {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'Link gerekli' });
 
     try {
-        const response = await fetch(`https://api.cobalt.tools/api/json`, {
+        const response = await fetch('https://api.cobalt.tools/', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -18,15 +20,19 @@ app.post('/api/download', async (req, res) => {
             },
             body: JSON.stringify({ url: url })
         });
+
         const data = await response.json();
         
+        // Cobalt API yanıt türlerini kontrol et
         if (data.url) {
-            res.json({ downloadUrl: data.url });
+            return res.json({ downloadUrl: data.url });
+        } else if (data.picker && data.picker.length > 0) {
+            return res.json({ downloadUrl: data.picker[0].url });
         } else {
-            res.status(400).json({ error: 'Video indirilemedi veya link geçersiz.' });
+            return res.status(400).json({ error: data.text || 'Video indirilemedi veya bu platform desteklenmiyor.' });
         }
     } catch (err) {
-        res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+        return res.status(500).json({ error: 'Sunucuya bağlanırken bir hata oluştu.' });
     }
 });
 
