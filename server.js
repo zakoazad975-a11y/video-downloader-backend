@@ -13,7 +13,6 @@ app.post('/api/download', (req, res) => {
         return res.status(400).json({ error: 'Video URL gereklidir.' });
     }
 
-    // yt-dlp ile doğrudan indirme bağlantısını çekiyoruz
     const command = `npx yt-dlp-exec "${videoUrl}" -g -f "best[ext=mp4]/best"`;
 
     exec(command, (error, stdout, stderr) => {
