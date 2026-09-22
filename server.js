@@ -1,53 +1,31 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
+const { exec } = require('child_process');
 
-app.use(cors({ origin: '*' }));
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-app.options('*', cors());
+app.post('/api/download', (req, res) => {
+    const videoUrl = req.body.url;
 
-app.get('/', (req, res) => {
-    res.send('Backend Sunucusu Aktif!');
-});
-
-app.post('/api/download', async (req, res) => {
-    const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'Lütfen geçerli bir bağlantı girin.' });
-
-    // Güncel ve çalışan Cobalt API sunucuları
-    const instances = [
-        'https://api.cobalt.tools',
-        'https://cobalt-api.kwippy.me',
-        'https://api.v1.cobalt.tools'
-    ];
-
-    for (const instance of instances) {
-        try {
-            const response = await fetch(instance, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ url: url })
-            });
-
-            if (!response.ok) continue;
-
-            const data = await response.json();
-
-            if (data.url) {
-                return res.json({ downloadUrl: data.url });
-            } else if (data.picker && data.picker.length > 0) {
-                return res.json({ downloadUrl: data.picker[0].url });
-            }
-        } catch (e) {
-            console.error(`Sunucu hatası (${instance}):`, e);
-        }
+    if (!videoUrl) {
+        return res.status(400).json({ error: 'Video URL gereklidir.' });
     }
 
-    return res.status(500).json({ error: 'Video indirilemedi veya servisler yoğun. Lütfen tekrar deneyin.' });
+    // yt-dlp ile doğrudan indirme bağlantısını çekiyoruz
+    const command = `npx yt-dlp-exec "${videoUrl}" -g -f "best[ext=mp4]/best"`;
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Hata: ${error.message}`);
+            return res.status(500).json({ error: 'Video bağlantısı alınamadı. Lütfen tekrar deneyin.' });
+        }
+
+        const downloadUrl = stdout.trim().split('\n')[0];
+        return res.json({ url: downloadUrl });
+    });
 });
 
-module.exports = app;
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Sunucu ${PORT} portunda çalışıyor.`));
