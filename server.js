@@ -2,13 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-// Tüm sitelerden ve frontend'den gelen isteklere izin ver (CORS)
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 app.options('*', cors());
 
-// Ana dizin testi için
 app.get('/', (req, res) => {
     res.send('Backend Sunucusu Aktif!');
 });
@@ -17,17 +15,16 @@ app.post('/api/download', async (req, res) => {
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'Lütfen geçerli bir bağlantı girin.' });
 
-    // Alternatif Cobalt API sunucuları
+    // Güncel ve çalışan Cobalt API sunucuları
     const instances = [
         'https://api.cobalt.tools',
         'https://cobalt-api.kwippy.me',
-        'https://api.v1.cobalt.tools',
-        'https://co.wuk.sh'
+        'https://api.v1.cobalt.tools'
     ];
 
     for (const instance of instances) {
         try {
-            const response = await fetch(`${instance}/api/json`, {
+            const response = await fetch(instance, {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json',
@@ -50,7 +47,7 @@ app.post('/api/download', async (req, res) => {
         }
     }
 
-    return res.status(500).json({ error: 'Video indirilemedi veya servisler yoğun. Başka bir bağlantı deneyin.' });
+    return res.status(500).json({ error: 'Video indirilemedi veya servisler yoğun. Lütfen tekrar deneyin.' });
 });
 
 module.exports = app;
